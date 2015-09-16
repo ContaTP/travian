@@ -32,14 +32,24 @@
         (= village-id (:villageIdStart movement))
         ))))
 
+(defn go-to
+  [village-id]
+  (fn
+    [move]
+    (let [{:keys [movement]} move]
+      (= village-id (:villageIdTarget movement))
+      )))
+
+(def filter-map {:to-from go-to-or-from :to go-to})
+
 (defn farm
-  [store src dest units & [description]]
+  [store farm-type src dest units & [description]]
   (let [description (or description dest)]
-    (let [active (filter (go-to-or-from dest) (:moves store))]
+    (let [active (filter ((farm-type filter-map) dest) (:moves store))]
       (if
         (empty? active)
         (do
-          (log/info "attack" description units)
+          (log/info "farm" farm-type description units)
           (raid (:session store) src dest units)
           )
         ))))

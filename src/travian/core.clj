@@ -22,8 +22,17 @@
         }
       )))
 
+(defn tick
+  [session path]
+  (println "tick")
+  (let [store (parse-and-store session)]
+      (load-file path) store)
+    )
+
 (defn -main
   [session path]
-  (let [store (parse-and-store session)]
-    (store (load-file path))
-    ))
+  (while (= true)
+    (tick session path)
+    (Thread/sleep (* 60 1000))
+    )
+  )

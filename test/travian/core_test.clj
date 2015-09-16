@@ -2,6 +2,16 @@
   (:require [clojure.test :refer :all]
             [travian.core :refer :all]))
 
+(defn counter
+  []
+  (let [c 100]
+    (fn [] (dec c)))
+  )
+
 (deftest a-test
   (testing "FIXME, I fail."
-    (is (= 0 1))))
+    (let [f (counter)]
+      (do
+        (is (= 99 (f)))
+        )
+      )))
