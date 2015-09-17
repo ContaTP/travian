@@ -9,7 +9,7 @@
   '[clojure.string :only (split)]
   '[travian.troops :as troops]
   '[travian.request :as request]
-  '[travian.vilages]
+  '[travian.villages]
   )
 
 (defn parse-and-store
@@ -24,14 +24,13 @@
 
 (defn tick
   [session path]
-  (println "tick")
-  (let [store (parse-and-store session)]
-      (load-file path) store)
-    )
+  (let [store (parse-and-store session)] 
+    (let [strategy (load-file path)] (strategy store)
+)))
 
 (defn -main
   [session path]
-  (while (= true)
+  (while (= true)                       ;
     (tick session path)
     (Thread/sleep (* 60 1000))
     )

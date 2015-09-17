@@ -18,12 +18,10 @@
 
 (defn api
   [session action controller params]
-  (log/debug session action controller params)
   (let [url (str "http://ks4-ru.travian.com/api/?c=" controller "&a=" action)]
     (let [body {:session session :action action :controller controller :params params}]
       (let [request (client/post url {:headers headers :content-type :json :form-params body :as :json})]
-        (log/debug request)
-        (parse-data request)
+        parse-data request
       ))))
 
 (defn cache

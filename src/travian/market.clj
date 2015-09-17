@@ -2,6 +2,10 @@
   (:gen-class)
 )
 
+(use 'travian.parse
+     '[clojure.algo.generic.functor :only (fmap)]
+)
+
 (def fix-int-keywords [:max :inOffers :inTransport :carry])
 
 (defn fix-int
@@ -22,13 +26,24 @@
   (into {} (map extract-id-data data))
 )
 
-(defn can-send
+(defn cargo
   [market]
   (*
-   (- 
-    (:max market)
-    (apply + (map market [:inOffers :inTransport]))
-    )
+   (- (:max market) (apply + (map market [:inOffers :inTransport])))
    (:carry market)
   )
 )
+
+(defn lack [storage to-send] 
+  into {} (filter (comp neg? val) (merge-with - storage to-send))
+)
+
+(defn has [storage to-send] (merge-with + to-send (lack storage to-send)))
+
+(defn cargo-limit
+  [send cargo]
+  (let [sum (apply + (vals send))]
+    (if (>= cargo sum)
+      send
+      (let [mult (/ sum (float cargo))] (fmap (fn [resource] (int (/ resource mult))) send)))
+    ))
