@@ -3,6 +3,8 @@
 )
 
 (use 'travian.parse
+     'travian.request
+     '[travian.data :as data]
      '[clojure.algo.generic.functor :only (fmap)]
 )
 
@@ -34,7 +36,12 @@
   )
 )
 
-(defn lack [storage to-send] 
+(defn cargo-map
+  [market-map]
+  (fmap cargo market-map)
+)
+
+(defn lack [storage to-send]
   into {} (filter (comp neg? val) (merge-with - storage to-send))
 )
 
@@ -47,3 +54,12 @@
       send
       (let [mult (/ sum (float cargo))] (fmap (fn [resource] (int (/ resource mult))) send)))
     ))
+
+(defn send
+  [session src dest to-send]
+  (dosync
+   (let [cargo (src @data/cargos) storage (src @data/storages) sended (cargo-limit (has storage to-send) cargo)]
+     (travian.request/send-resources session src dest sended)
+     sended
+     )
+   ))

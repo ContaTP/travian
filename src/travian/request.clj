@@ -13,15 +13,14 @@
 
 (defn parse-data
   [{body :body}]
-  (let [data (:cache body)]
-    data))
+  (let [data (:cache body)] data))
 
 (defn api
   [session action controller params]
   (let [url (str "http://ks4-ru.travian.com/api/?c=" controller "&a=" action)]
     (let [body {:session session :action action :controller controller :params params}]
       (let [request (client/post url {:headers headers :content-type :json :form-params body :as :json})]
-        parse-data request
+        (parse-data request)
       ))))
 
 (defn cache
@@ -31,7 +30,7 @@
 
 (defn get-all
   [session]
-  (parse-data (api session "getAll" "player" {})))
+  (api session "getAll" "player" {}))
 
 (defn send-troops-params
   [movement-type src dest units]
@@ -45,3 +44,13 @@
 (defn send-troops
   [session movement-type src dest units]
   (api session "send" "troops" (send-troops-params movement-type src dest units)))
+
+(defn send-resources
+  [session src dest res]
+  (api session "sendResources" "trade" {:sourceVillageId src, :resources (concat [0] (vals res)) :destVillageId dest, :recurrences 1})
+  )
+
+(defn get-market
+  [session village-ids]
+  (cache session (map #(str "Merchants" %) village-ids))
+)
