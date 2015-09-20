@@ -1,26 +1,47 @@
 (ns travian.core
   (:gen-class)
-  (:require [clj-http.client :as client]
-            [clojure.tools.logging :as log]
-            ))
+  (:require
+   [clj-http.client :as client]
+   [clojure.tools.logging :as log]
+   [travian.request]
+   [travian.data]
+   [travian.troops]
+   [travian.villages]
+   [travian.market]
+   ))
 
 (use
   'clojure.pprint
   '[clojure.string :only (split)]
-  '[travian.troops :as troops]
-  '[travian.data :as data]
-  '[travian.request :as request]
-  '[travian.villages]
   )
+
+(defn process
+  []
+  (let [raw @travian.data/raw]
+    (alter travian.data/moves into (travian.troops/moves raw))
+    (alter travian.data/villages into (travian.villages/own raw))
+    (alter travian.data/storages into (travian.villages/resources @travian.data/villages))
+    (alter travian.data/market into (travian.market/parse raw))
+    (alter travian.data/cargos into (travian.market/cargo-map @travian.data/market))
+    ))
+
+(defn update
+  [items]
+  (alter travian.data/raw into items)
+  (process)
+)
+
+(defn set-village-session
+  [session villages]
+  (alter travian.data/sessions into (map array-map villages (repeat (count villages) session)))
+)
 
 (defn parse-and-store
   [session]
   (dosync
-   (let [data (request/get-all session)]
-     (alter data/villages into (travian.villages/own data))
-     (alter data/storages into (travian.villages/resources @data/villages))
-     (alter data/market into (travian.market/parse (travian.request/get-market session (keys @data/villages))))
-     (alter data/cargos into (travian.market/cargo-map @data/market))
+   (let [data (travian.request/get-all session)]
+     (update data)
+     (set-village-session session (keys @travian.data/villages))
      )))
 
 (defn tick
@@ -31,7 +52,7 @@
 
 (defn -main
   [session path]
-  (while (= true)                       ;
+  (while (= true)
     (tick session path)
     (Thread/sleep (* 60 1000))
     )

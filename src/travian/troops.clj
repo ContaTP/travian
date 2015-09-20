@@ -1,13 +1,13 @@
 (ns travian.troops
   (:gen-class)
-  (:require [clj-http.client :as client]
-            [clojure.tools.logging :as log])
-  )
+  (:require
+   [clj-http.client :as client]
+   [clojure.tools.logging :as log]
+   [travian.parse]
+   [travian.request]
+   [travian.data]
+   ))
 
-(use
-  'travian.parse
-  '[travian.request :as request]
-  )
 
 (defn moving?
   [{name :name}]
@@ -20,7 +20,7 @@
 
 (defn raid
   [session src dest units]
-  (request/send-troops session 4 src dest units))
+  (travian.request/send-troops session 4 src dest units))
 
 (defn go-to-or-from
   [village-id]
@@ -43,14 +43,14 @@
 (def filter-map {:to-from go-to-or-from :to go-to})
 
 (defn farm
-  [store farm-type src dest units & [description]]
+  [farm-type src dest units & [description]]
   (let [description (or description dest)]
-    (let [active (filter ((farm-type filter-map) dest) (:moves store))]
+    (let [active (filter ((farm-type filter-map) dest) @travian.data/moves)]
       (if
         (empty? active)
         (do
           (log/info "farm" farm-type description units)
-          (raid (:session store) src dest units)
+          (raid (src @travian.data/sessions) src dest units)
           )
         ))))
 

@@ -1,11 +1,14 @@
 (ns travian.market
   (:gen-class)
+  (:require
+     [travian.parse]
+     [travian.request]
+   )
 )
 
-(use 'travian.parse
-     'travian.request
-     '[travian.data :as data]
-     '[clojure.algo.generic.functor :only (fmap)]
+(use
+ '[travian.data :as data]
+ '[clojure.algo.generic.functor :only (fmap)]
 )
 
 (def fix-int-keywords [:max :inOffers :inTransport :carry])
@@ -23,9 +26,14 @@
     [(keyword (:villageId data)) (into data (fix-int data))])
 )
 
+(defn merchants?
+  [{name :name}]
+  (re-matches #"Merchants:[0-9]+" name)
+)
+
 (defn parse
   [data]
-  (into {} (map extract-id-data data))
+  (into {} (map extract-id-data (filter merchants? data)))
 )
 
 (defn cargo
