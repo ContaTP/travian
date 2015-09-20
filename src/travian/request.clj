@@ -12,8 +12,9 @@
    :Accept-Encoding "gzip deflate"})
 
 (defn parse-data
-  [{body :body}]
-  (let [data (:cache body)] data))
+  [{{{errors :errors} :response cache :cache} :body}]
+  (if errors (log/error errors) cache)
+)
 
 (defn api
   [session action controller params]
@@ -35,6 +36,7 @@
 (defn send-troops-params
   [movement-type src dest units]
   {:destVillageId dest
+   :catapultTargets [99]
    :villageId src
    :movementType movement-type
    :redeployHero false

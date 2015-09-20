@@ -43,14 +43,17 @@
 (def filter-map {:to-from go-to-or-from :to go-to})
 
 (defn farm
-  [farm-type src dest units & [description]]
-  (let [description (or description dest)]
+  [farm-type src dest units & [description movement-type]]
+  (let [description (or description dest)
+        session (src @travian.data/sessions)
+        movement-type (or movement-type 4)
+        ]
     (let [active (filter ((farm-type filter-map) dest) @travian.data/moves)]
       (if
         (empty? active)
         (do
-          (log/info "farm" farm-type description units)
-          (raid (src @travian.data/sessions) src dest units)
+          (log/info description src dest movement-type units)
+          (travian.request/send-troops session movement-type src dest units)
           )
         ))))
 

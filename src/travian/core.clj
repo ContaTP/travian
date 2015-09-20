@@ -25,8 +25,9 @@
     (alter travian.data/cargos into (travian.market/cargo-map @travian.data/market))
     ))
 
-(defn update
+(defn update-data
   [items]
+  (ref-set travian.data/raw [])
   (alter travian.data/raw into items)
   (process)
 )
@@ -40,15 +41,15 @@
   [session]
   (dosync
    (let [data (travian.request/get-all session)]
-     (update data)
+     (update-data data)
      (set-village-session session (keys @travian.data/villages))
      )))
 
 (defn tick
   [session path]
-  (let [store (parse-and-store session)]
-    (let [strategy (load-file path)] (strategy store)
-)))
+  (parse-and-store session)
+  (let [strategy (load-file path)] (strategy)
+))
 
 (defn -main
   [session path]
