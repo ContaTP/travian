@@ -25,7 +25,10 @@
     (let [[[& villages]] (filter #(not (empty? %)) (map travian.parse/extract raw))]
       (map-id-village villages))))
 
-(defn resources 
+(defn resources
   [own]
-  (fmap (fn [item] (:storage item)) own)
-)
+  (fmap
+   (fn [item]
+     ; Sometimes vals will be in string
+     (fmap travian.parse/to-int-if-string (:storage item)))
+   own))

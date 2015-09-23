@@ -4,6 +4,7 @@
    [clj-http.client :as client]
    [clojure.tools.logging :as log]
    [travian.request]
+   [travian.buildings]
    [travian.data]
    [travian.troops]
    [travian.villages]
@@ -18,7 +19,9 @@
 (defn process
   []
   (let [raw @travian.data/raw]
-    (alter travian.data/moves into (travian.troops/moves raw))
+    (ref-set travian.data/moves (travian.troops/moves raw))
+    (ref-set travian.data/buildings (travian.buildings/parse-buildings raw))
+    (alter travian.data/queue into (travian.buildings/parse-queue raw))
     (alter travian.data/villages into (travian.villages/own raw))
     (alter travian.data/storages into (travian.villages/resources @travian.data/villages))
     (alter travian.data/market into (travian.market/parse raw))
@@ -30,6 +33,7 @@
   (ref-set travian.data/raw [])
   (alter travian.data/raw into items)
   (process)
+  (log/info "raw" (count @travian.data/raw) "moves" (count @travian.data/moves))
 )
 
 (defn set-village-session
@@ -43,6 +47,10 @@
    (let [data (travian.request/get-all session)]
      (update-data data)
      (set-village-session session (keys @travian.data/villages))
+     ;; Hack
+     (into data (travian.request/get-market session (keys @travian.data/villages)))
+     (update-data
+      (apply conj data (travian.request/get-market session (keys @travian.data/villages))))
      )))
 
 (defn tick

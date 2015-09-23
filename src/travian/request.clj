@@ -52,6 +52,11 @@
   (api session "sendResources" "trade" {:sourceVillageId src, :resources (concat [0] (vals res)) :destVillageId dest, :recurrences 1})
   )
 
+(defn upgrade-building
+  [session village-id location-id building-type]
+  (api session "upgrade" "building" {:buildingType building-type :locationId location-id :villageId village-id})
+)
+
 (defn get-market
   [session village-ids]
   (cache session (map #(str "Merchants" %) village-ids))
