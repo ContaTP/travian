@@ -4,6 +4,8 @@
 
 (defn parse-int [s] (Integer/parseInt s))
 
+(defn name [i] (:name i))
+
 (defn to-int-if-string
   [s]
   (if (string? s) (parse-int s) s))

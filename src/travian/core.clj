@@ -9,6 +9,7 @@
    [travian.troops]
    [travian.villages]
    [travian.market]
+   [travian.parse]
    ))
 
 (use
@@ -28,10 +29,21 @@
     (alter travian.data/cargos into (travian.market/cargo-map @travian.data/market))
     ))
 
+(defn filter-raw
+  [old new]
+  (let [new-names (map travian.parse/name new)]
+    (filter #(not (contains? (set new-names) (travian.parse/name %))) old)
+  ))
+
+(defn update-raw
+  [items]
+  (let [raw @travian.data/raw]
+    (ref-set travian.data/raw (concat (filter-raw raw items) items))
+    ))
+
 (defn update-data
   [items]
-  (ref-set travian.data/raw [])
-  (alter travian.data/raw into items)
+  (update-raw items)
   (process)
   (log/info "raw" (count @travian.data/raw) "moves" (count @travian.data/moves))
 )
@@ -44,25 +56,21 @@
 (defn parse-and-store
   [session]
   (dosync
-   (let [data (travian.request/get-all session)]
+   (let [data (travian.request/get-all session) villages (keys (travian.villages/own data))]
      (update-data data)
-     (set-village-session session (keys @travian.data/villages))
-     ;; Hack
-     (into data (travian.request/get-market session (keys @travian.data/villages)))
-     (update-data
-      (apply conj data (travian.request/get-market session (keys @travian.data/villages))))
+     (set-village-session session villages)
+     (update-data (travian.request/get-market session villages))
      )))
 
 (defn tick
-  [session path]
-  (parse-and-store session)
+  [path]
   (let [strategy (load-file path)] (strategy)
 ))
 
 (defn -main
-  [session path]
+  [path]
   (while (= true)
-    (tick session path)
+    (tick path)
     (Thread/sleep (* 60 1000))
     )
   )
